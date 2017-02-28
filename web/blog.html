@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>The Blog</title>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+    <style>
+        #blogMessagePrototype{
+            display: none;
+        }
+        #blog{
+            margin: 0 auto;
+        }
+        .blogMessage{
+            border: 1px black solid;
+            padding: 5px;
+            margin: 5px;
+        }
+        .blogMessageTitle{
+            border-bottom: 1px grey dotted;
+            font: bold 12pt italic;
+        }
+        .blogMessageText{
+            border-bottom: 1px grey dotted;
+        }
+        .blogMessageFooter{
+            font: bold 10pt italic;
+        }
+        .blogMessageButtons{
+            float: right;
+        }
+        .blogMessageButtonsEdit, .blogMessageButtonsDelete{
+            margin: 3px;
+            padding: 3px;
+            cursor: pointer;
+        }
+        .blogMessageButtonsEdit{
+            background-color: yellow;
+        }
+        .blogMessageButtonsDelete{
+            background-color: red;
+        }
+        .blogForm{
+            display: none;
+            border: 1px grey solid;
+            padding: 5px;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>THE BLOG</h1>
+    <div id="blog"></div>
+
+    <input type="button" id="showAddForm" value="Add a message">
+
+    <div class="blogMessage" id="blogMessagePrototype">
+        <div class="blogMessageButtons">
+            <span class="blogMessageButtonsEdit">Edit</span><span class="blogMessageButtonsDelete">Delete</span>
+        </div>
+        <div class="blogMessageTitle">
+
+        </div>
+        <div class="blogMessageText">
+
+        </div>
+        <div class="blogMessageFooter">
+            created at: <span class="blogMessageCreated"></span>
+            updated at: <span class="blogMessageUpdated"></span>
+        </div>
+    </div>
+
+    <form id="postBlogMessageForm" class="blogForm">
+        <h3>Add a message</h3>
+        Title: <input type="text" id="postBlogMessageTitle" name="postBlogMessageTitle"><br>
+        Text: <textarea id="postBlogMessageText" name="postBlogMessageText"></textarea><br>
+        <input id="postBlogMessageSubmit" name="submit" type="button" value="Submit">
+    </form>
+
+    <form id="patchBlogMessageForm" class="blogForm">
+        <h3>Edit the message</h3>
+        id: <span id="patchBlogMessageId"></span><br>
+        Title: <input type="text" id="patchBlogMessageTitle" name="patchBlogMessageTitle"><br>
+        Text: <textarea id="patchBlogMessageText" name="patchBlogMessageText"></textarea><br>
+        <input id="patchBlogMessageSubmit" name="patch" type="button" value="Patch">
+    </form>
+
+    <script>
+
+        blogUrl = 'http://akerbel.ru';
+
+        function getIdFromName(name)
+        {
+            id = name.substr(name.indexOf('_')+1);
+            return id;
+        }
+
+        $(document).ready(function(){
+
+            // Get and show a list of blog messages
+            $.ajax({
+                method: 'GET',
+                url: blogUrl+'/list',
+                success: function(data){
+                    console.log(data);
+                    $.each(data.messages, function(i, message){
+                        id = 'blogMessage_'+message.id;
+                        $('#blogMessagePrototype')
+                                .clone()
+                                .attr({'id': id})
+                                .appendTo('#blog');
+                        id = '#'+id;
+                        $(id+' .blogMessageTitle').text(message.title);
+                        $(id+' .blogMessageText').text(message.text);
+                        $(id+' .blogMessageCreated').text(message.created_at.date);
+                        $(id+' .blogMessageUpdated').text(message.updated_at.date);
+                    })
+                },
+                error: function(data) {
+                    console.log(data);
+                    alert(JSON.parse(data.responseText).error_text);
+                }
+            });
+
+            // Show "add" form
+            $('#showAddForm').on('click', function(){
+                $('#postBlogMessageForm').show();
+                $(this).hide();
+            });
+
+            // Add a new message
+            $('#postBlogMessageSubmit').on('click', function(){
+                $.ajax({
+                    method: 'POST',
+                    url: blogUrl+'/message',
+                    data: {'title': $('#postBlogMessageTitle').val(), 'text': $('#postBlogMessageText').val()},
+                    success: function() {
+                        location.reload();
+                    },
+                    error: function(data) {
+                        console.log(data);
+                        alert(JSON.parse(data.responseText).error_text);
+                    }
+                });
+            });
+
+            // Click "edit" button, throw data from a message to edit form
+            $('#blog').on('click', '.blogMessageButtonsEdit', function(){
+                message = $(this).parents('.blogMessage');
+                $('#patchBlogMessageId').text(getIdFromName($(message).attr('id')));
+                $('#patchBlogMessageTitle').val($(message).children('.blogMessageTitle').text());
+                $('#patchBlogMessageText').val($(message).children('.blogMessageText').text());
+
+                $('#postBlogMessageForm').hide();
+                $('#patchBlogMessageForm').show();
+            });
+
+            // Submiting of edit form
+            $('#patchBlogMessageSubmit').on('click', function(){
+                $.ajax({
+                    method: 'PATCH',
+                    url: blogUrl+'/message/'+$('#patchBlogMessageId').text(),
+                    data: {'title': $('#patchBlogMessageTitle').val(), 'text': $('#patchBlogMessageText').val()},
+                    success: function() {
+                        location.reload();
+                    },
+                    error: function(data) {
+                        console.log(data);
+                        alert(JSON.parse(data.responseText).error_text);
+                    }
+                });
+            });
+
+            // Click "delete" button and delete request
+            $('#blog').on('click', '.blogMessageButtonsDelete', function(){
+                if (confirm('Do you realy want to delete this message?')) {
+                    $.ajax({
+                        method: 'DELETE',
+                        url: blogUrl + '/message/' + getIdFromName($(this).parents('.blogMessage').attr('id')),
+                        success: function () {
+                            location.reload();
+                        },
+                        error: function(data) {
+                            console.log(data);
+                            alert(JSON.parse(data.responseText).error_text);
+                        }
+                    });
+                }
+            });
+        });
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+akerbel_blog_homepage:
+    path:     /
+    defaults: { _controller: akerbelBlogBundle:Default:index }
+
+akerbel_blog_post:
+    path: /message
+    defaults: { _controller: akerbelBlogBundle:Default:post }
+    methods:  [PUT|POST]
+
+akerbel_blog_list:
+    path: /list
+    defaults: { _controller: akerbelBlogBundle:Default:list }
+    methods:  [GET]
+
+akerbel_blog_get:
+    path: /message/{id}
+    defaults: { _controller: akerbelBlogBundle:Default:get }
+    methods:  [GET]
+
+akerbel_blog_patch:
+    path: /message/{id}
+    defaults: { _controller: akerbelBlogBundle:Default:patch }
+    methods:  [PATCH]
+
+akerbel_blog_delete:
+    path: /message/{id}
+    defaults: { _controller: akerbelBlogBundle:Default:delete }
+    methods:  [DELETE]

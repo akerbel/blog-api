@@ -1,0 +1,4 @@
+akerbel_blog:
+    resource: "@akerbelBlogBundle/Resources/config/routing.yml"
+    prefix:   /
+
